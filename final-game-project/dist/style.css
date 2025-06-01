@@ -1,0 +1,329 @@
+body {
+    font-family: 'Press Start 2P', sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #1a2a1a; /* Dark forest green background */
+    overflow: hidden; /* Prevent scrolling */
+}
+
+.container {
+    width: 100%;
+    max-width: 1000px; /* Increased max-width for a bigger game screen */
+    padding: 2rem;
+    background-color: #334433; /* Muted green for container */
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    margin: 0 auto;
+    position: relative; /* For absolute positioning of game elements */
+}
+
+h1 {
+    color: #e6e6e6; /* Off-white for title */
+    margin-bottom: 0.5rem; /* Adjusted for subtitle */
+    font-size: 2em;
+}
+
+.subtitle { /* Specific class for the subtitle */
+    color: #e6e6e6;
+    font-size: 1.2em;
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+#scoreboard {
+    color: #e6e6e6;
+    font-family: 'Press Start 2P', sans-serif;
+    font-size: 0.8em; /* Smaller font for scoreboard */
+    z-index: 80; /* Adjusted z-index to be below question/info overlays but above game elements */
+}
+
+#scoreboard h3, #scoreboard h4 {
+    color: #ffc107; /* Amber for scoreboard titles */
+    font-size: 1em;
+    margin-bottom: 0.5em;
+}
+
+#scoreboard p {
+    margin-bottom: 0.2em;
+}
+
+#scoreboard ul {
+    list-style: none;
+    padding: 0;
+}
+
+#scoreboard li {
+    margin-bottom: 0.1em;
+}
+
+/* Overlay styles */
+.overlay {
+    display: none; /* Hidden by default */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.95);
+    z-index: 90; /* Adjusted z-index for info/leaderboard overlays */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    padding: 20px;
+    box-sizing: border-box;
+    font-family: 'Press Start 2P', sans-serif;
+}
+
+.overlay-content {
+    background-color: #334433;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+    text-align: center;
+    max-width: 90%;
+    max-height: 90%;
+    overflow-y: auto; /* Enable scrolling for long content */
+}
+
+.overlay-content h3 {
+    font-size: 1.8em;
+    margin-bottom: 1.5rem;
+}
+
+.overlay-content p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.highlight-player {
+    color: #00FFFF; /* Cyan color to highlight player's score */
+    font-weight: bold;
+}
+
+
+#gameCanvas {
+    border: 2px solid #556655; /* Forest-like border */
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+    background-color: #78c278; /* Lighter green for sky/background */
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 100%; /* Make it fill parent width */
+    height: auto; /* Maintain aspect ratio */
+    aspect-ratio: 3 / 2; /* Explicitly set 600:400 aspect ratio (600/400 = 3/2) */
+}
+
+#startScreen, #gameOverScreen, #equianoEndingScreen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9); /* Dark overlay */
+    z-index: 70; /* Adjusted z-index to be below scoreboard and other overlays */
+    color: white;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#gameOverScreen, #equianoEndingScreen {
+    display: none; /* Hidden by default */
+}
+
+#startScreen h2, #gameOverScreen h2, #equianoEndingScreen h2 {
+    font-size: 2.5em;
+    margin-bottom: 0.5rem; /* Adjusted for subtitle */
+    color: #ffc107; /* Amber for titles */
+}
+
+#startScreen p:first-of-type { /* Style for the subtitle in startScreen */
+    font-size: 1.2em;
+    margin-top: 0;
+    margin-bottom: 1.5rem; /* Keep space for main description */
+}
+
+#gameOverScreen p, #equianoEndingScreen p {
+    font-size: 1.2em;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+#playButton, #restartButton, #restartButtonEnding, #howToPlayButton, #showLeaderboardButton, #saveNameButton {
+    padding: 1.5rem 3rem;
+    font-size: 2em;
+    background-color: #ff4500; /* Orange-red for buttons */
+    color: white;
+    border: 2px solid #cc3700;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+}
+
+#playButton:hover, #restartButton:hover, #restartButtonEnding:hover, #howToPlayButton:hover, #showLeaderboardButton:hover, #saveNameButton:hover {
+    background-color: #cc3700;
+    transform: translateY(-2px);
+}
+
+#playButton:active, #restartButton:active, #restartButtonEnding:active, #howToPlayButton:active, #showLeaderboardButton:active, #saveNameButton:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Specific styles for new buttons */
+#howToPlayButton, #showLeaderboardButton {
+    background-color: #4CAF50; /* Green for info/leaderboard */
+    border: 2px solid #388E3C;
+}
+#howToPlayButton:hover, #showLeaderboardButton:hover {
+    background-color: #388E3C;
+}
+
+#saveNameButton {
+    background-color: #2196F3; /* Blue for save name */
+    border: 2px solid #1976D2;
+    padding: 0.75rem 1.5rem; /* Smaller padding for this button */
+    font-size: 1.2em;
+}
+#saveNameButton:hover {
+    background-color: #1976D2;
+}
+
+
+#questionOverlay {
+    display: none; /* Hidden by default */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.95); /* Very dark, almost opaque */
+    z-index: 100; /* Highest z-index to ensure it's always on top */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#questionOverlay h3 {
+    font-size: 1.8em;
+    margin-bottom: 1.5rem;
+    color: #8a2be2; /* Deep purple for questions */
+    text-align: center;
+}
+
+#questionOptions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 80%;
+    max-width: 400px;
+}
+
+.question-option {
+    padding: 1rem;
+    border-radius: 0.375rem;
+    background-color: #333;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-align: center;
+    font-size: 1.1em;
+    border: 1px solid #555;
+    width: 100%;
+}
+
+.question-option:hover {
+    background-color: #444;
+}
+
+.question-option.correct {
+    background-color: #28a745;
+}
+
+.question-option.incorrect {
+    background-color: #dc3545;
+}
+
+#questionTimer {
+    font-size: 1.5em;
+    color: #ffc107;
+    margin-top: 1.5rem;
+}
+
+#countdownTimer { /* New style for countdown */
+    font-size: 2em;
+    color: #ffc107;
+    margin-top: 1rem;
+}
+
+#messageContainer {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.9);
+    color: #f8f8f8;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    z-index: 50; /* Keep it high enough to be visible */
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+    visibility: hidden;
+    border: 1px solid #555;
+}
+
+#messageContainer.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+    .container {
+        padding: 3rem;
+    }
+    h1 {
+        font-size: 3em;
+    }
+    .subtitle {
+        font-size: 1.5em;
+    }
+    #startScreen h2, #gameOverScreen h2, #equianoEndingScreen h2 {
+        font-size: 3.5em;
+    }
+    #startScreen p:first-of-type {
+        font-size: 1.4em;
+    }
+    #gameOverScreen p, #equianoEndingScreen p {
+        font-size: 1.4em;
+    }
+    #playButton, #restartButton, #restartButtonEnding, #howToPlayButton, #showLeaderboardButton {
+        font-size: 2.5em;
+    }
+    #questionOverlay h3 {
+        font-size: 2.2em;
+    }
+    .question-option {
+        font-size: 1.2em;
+    }
+    #questionTimer {
+        font-size: 2em;
+    }
+    #countdownTimer {
+        font-size: 2.5em;
+    }
+}

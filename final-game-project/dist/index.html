@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>Final Game Project</title>
+  <link rel="stylesheet" href="./style.css">
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>飛揚小腦 (測試你的智商)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-900 text-white font-inter antialiased">
+    <div class="container">
+        <h1>飛揚小腦</h1>
+        <p class="subtitle">(測試你的智商)</p>
+
+        <div id="scoreboard" class="absolute top-4 right-4 bg-gray-800 p-3 rounded-lg shadow-lg text-sm z-50">
+            <h3 class="text-yellow-400 mb-2">計分板</h3>
+            <p>玩家: <span id="playerNameDisplay">訪客</span></p>
+            <p>目前分數: <span id="currentScore">0</span></p>
+            <p>最高分數: <span id="highScore">0</span></p>
+            <p>累積總分: <span id="accumulatedScore">0</span></p>
+            <h4 class="text-yellow-400 mt-3 mb-1">排行榜 (前10名)</h4>
+            <ul id="leaderboardList" class="text-xs">
+                </ul>
+        </div>
+
+        <div id="startScreen">
+            <h2>飛揚小腦</h2>
+            <p class="subtitle">(測試你的智商)</p>
+            <div class="mb-4">
+                <label for="playerNameInput" class="block text-sm mb-2">請輸入你的名字：</label>
+                <input type="text" id="playerNameInput" placeholder="你的名字" class="p-2 rounded bg-gray-700 text-white w-full max-w-xs" maxlength="15">
+                <button id="saveNameButton" class="mt-2 px-4 py-2 bg-blue-600 rounded hover:bg-blue-700 transition">儲存名字</button>
+            </div>
+            <button id="playButton" class="mb-4">開始遊戲</button>
+            <button id="howToPlayButton" class="mb-4">遊戲說明</button>
+            <button id="showLeaderboardButton">顯示排行榜</button>
+        </div>
+
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="questionOverlay">
+            <h3 id="questionText"></h3>
+            <div id="questionOptions">
+                <button class="question-option"></button>
+                <button class="question-option"></button>
+                <button class="question-option"></button>
+                <button class="question-option"></button>
+            </div>
+            <div id="questionTimer">時間：15秒</div>
+            <div id="countdownTimer" class="text-2xl mt-4 hidden"></div> </div>
+
+        <div id="gameOverScreen">
+            <h2>遊戲結束！</h2>
+            <p id="gameOverText"></p>
+            <button id="restartButton">重新開始</button>
+        </div>
+
+        <div id="equianoEndingScreen">
+            <h2>恭喜你！</h2>
+            <p id="equianoEndingText"></p>
+            <button id="restartButtonEnding">再玩一次</button>
+        </div>
+
+        <div id="messageContainer">
+            <p id="messageText"></p>
+        </div>
+
+        <div id="howToPlayOverlay" class="overlay">
+            <div class="overlay-content">
+                <h3 class="text-yellow-400">遊戲說明</h3>
+                <p>1. 按下空白鍵讓大腦跳躍。</p>
+                <p>2. 不要撞到水管、天花板或地面，否則會立即「遊戲結束」。</p>
+                <p>3. 當你收集到一個黃金小冊子時，你需要回答一個問題。無論你答對、答錯還是未作答，遊戲都可以繼續。你的分數將取決於你答對了多少問題。</p>
+                <p>4. 整個遊戲中只有100道問題，所以如果你錯過一個小冊子，你基本上就錯過了一次回答問題的機會。</p>
+                <button id="closeHowToPlayButton" class="mt-4 px-6 py-2 bg-red-600 rounded hover:bg-red-700">關閉</button>
+            </div>
+        </div>
+
+        <div id="leaderboardOverlay" class="overlay">
+            <div class="overlay-content">
+                <h3 class="text-yellow-400">排行榜</h3>
+                <ul id="fullLeaderboardList" class="text-sm text-left mx-auto max-w-xs">
+                    </ul>
+                <button id="closeLeaderboardButton" class="mt-4 px-6 py-2 bg-red-600 rounded hover:bg-red-700">關閉</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/tone@14.7.77/build/Tone.min.js"></script>
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, query, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let currentUserId = null;
+        let isAuthReady = false;
+        let userHighScore = 0;
+        let userAccumulatedScore = 0;
+        let currentUserName = "訪客"; // Default username
+
+        // Elements for scoreboard
+        const currentScoreElement = document.getElementById('currentScore');
+        const highScoreElement = document.getElementById('highScore');
+        const accumulatedScoreElement = document.getElementById('accumulatedScore');
+        const leaderboardListElement = document.getElementById('leaderboardList'); // Small scoreboard
+        const fullLeaderboardListElement = document.getElementById('fullLeaderboardList'); // Full leaderboard
+        const playerNameInput = document.getElementById('playerNameInput');
+        const saveNameButton = document.getElementById('saveNameButton');
+        const playerNameDisplay = document.getElementById('playerNameDisplay');
+        const playButton = document.getElementById('playButton');
+        const showLeaderboardButton = document.getElementById('showLeaderboardButton');
+
+
+        // Authentication listener
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUserId = user.uid;
+                console.log("Authenticated as:", currentUserId);
+                isAuthReady = true;
+                await loadUserData(currentUserId);
+                setupLeaderboardListener();
+            } else {
+                console.log("No user, signing in anonymously...");
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Firebase authentication error:", error);
+                }
+            }
+        });
+
+        async function loadUserData(userId) {
+            const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/profile`, 'scores');
+            try {
+                const docSnap = await getDoc(userDocRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    userHighScore = data.highScore || 0;
+                    userAccumulatedScore = data.accumulatedScore || 0;
+                    currentUserName = data.username || `玩家_${userId.substring(0, 4)}`;
+                    console.log("Loaded user data:", data);
+                } else {
+                    // Create initial user data if it doesn't exist
+                    currentUserName = `玩家_${userId.substring(0, 4)}`;
+                    await setDoc(userDocRef, {
+                        highScore: 0,
+                        accumulatedScore: 0,
+                        username: currentUserName
+                    });
+                    userHighScore = 0;
+                    userAccumulatedScore = 0;
+                    console.log("Created new user data.");
+                }
+                highScoreElement.textContent = userHighScore;
+                accumulatedScoreElement.textContent = userAccumulatedScore;
+                playerNameInput.value = currentUserName;
+                playerNameDisplay.textContent = currentUserName;
+                playButton.disabled = false; // Enable play button once username is loaded/set
+                showLeaderboardButton.disabled = false; // Enable leaderboard button
+
+            } catch (e) {
+                console.error("Error loading user data:", e);
+                // Fallback to default if Firebase fails
+                highScoreElement.textContent = userHighScore;
+                accumulatedScoreElement.textContent = userAccumulatedScore;
+                playerNameInput.value = currentUserName;
+                playerNameDisplay.textContent = currentUserName;
+                playButton.disabled = false;
+                showLeaderboardButton.disabled = false;
+            }
+        }
+
+        async function updateUserData(userId, newHighScore, scoreToAdd) {
+            if (!isAuthReady) {
+                console.warn("Firebase not ready to update user data.");
+                return;
+            }
+            const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/profile`, 'scores');
+            const leaderboardDocRef = doc(db, `artifacts/${appId}/public/data/leaderboard`, userId);
+
+            try {
+                // Update user's private profile
+                await setDoc(userDocRef, {
+                    highScore: newHighScore,
+                    accumulatedScore: userAccumulatedScore + scoreToAdd,
+                    username: currentUserName // Use the currentUserName
+                }, { merge: true });
+
+                userHighScore = newHighScore; // This line updates the local userHighScore
+                userAccumulatedScore += scoreToAdd;
+                highScoreElement.textContent = userHighScore;
+                accumulatedScoreElement.textContent = userAccumulatedScore;
+                console.log(`Updated user ${userId} private data: High Score = ${userHighScore}, Accumulated Score = ${userAccumulatedScore}`);
+
+                // Update public leaderboard
+                await setDoc(leaderboardDocRef, {
+                    userId: userId,
+                    username: currentUserName, // Use the currentUserName
+                    highScore: newHighScore,
+                    accumulatedScore: userAccumulatedScore
+                }, { merge: true });
+                console.log(`Updated user ${userId} public leaderboard data: High Score = ${newHighScore}, Accumulated Score = ${userAccumulatedScore}`);
+
+            } catch (e) {
+                console.error("Error updating user data:", e);
+            }
+        }
+
+        function setupLeaderboardListener() {
+            if (!isAuthReady) {
+                console.warn("Firebase not ready for leaderboard listener.");
+                return;
+            }
+            const leaderboardColRef = collection(db, `artifacts/${appId}/public/data/leaderboard`);
+            // Removed orderBy as per instructions, will sort in JS
+            const q = query(leaderboardColRef); 
+
+            onSnapshot(q, (snapshot) => {
+                let leaderboardData = [];
+                snapshot.forEach((doc) => {
+                    leaderboardData.push(doc.data());
+                });
+
+                // Sort data by highScore in descending order in JavaScript
+                leaderboardData.sort((a, b) => b.highScore - a.highScore);
+
+                leaderboardListElement.innerHTML = ''; // Small scoreboard
+                fullLeaderboardListElement.innerHTML = ''; // Full leaderboard
+
+                // Display top 10
+                leaderboardData.slice(0, 10).forEach((data) => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${data.username}: ${data.highScore} (累積: ${data.accumulatedScore})`;
+                    if (data.userId === currentUserId) {
+                        listItem.classList.add('highlight-player'); // Highlight current player
+                    }
+                    leaderboardListElement.appendChild(listItem.cloneNode(true)); // Clone for small scoreboard
+                    fullLeaderboardListElement.appendChild(listItem); // Add to full leaderboard
+                });
+                console.log("Leaderboard updated:", leaderboardData.slice(0, 10));
+            }, (error) => {
+                console.error("Error fetching leaderboard:", error);
+            });
+        }
+
+        // Expose Firebase variables and functions to the global scope for script.js
+        window.firebaseApp = app;
+        window.firestoreDb = db;
+        window.firebaseAuth = auth;
+        window.getCurrentUserId = () => currentUserId;
+        window.getIsAuthReady = () => isAuthReady;
+        window.updateUserData = updateUserData;
+        window.getUserHighScore = () => userHighScore;
+        window.getUserAccumulatedScore = () => userAccumulatedScore;
+        window.updateCurrentScoreDisplay = (score) => {
+            currentScoreElement.textContent = score;
+        };
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
+<!-- partial -->
+  <script  src="./script.js"></script>
+
+</body>
+</html>
